@@ -1,7 +1,7 @@
 # =============================================================================
 # Telegram Jira: thông báo sự kiện Jira (issue, comment) vào Telegram
 #
-#   Jira webhook -> Source -> Transformation (định dạng sự kiện Jira) -> Destination (Telegram sendMessage)
+#   Jira webhook -> Source -> Transformation (định dạng sự kiện Jira) -> Destination Telegram dùng chung (telegram.tf)
 #
 # Webhook trên Jira được Terraform tạo luôn với url = hookdeck_source.telegram_jira.url,
 # nên trong cùng một lần apply: tạo Source trước, rồi tạo/cập nhật webhook Jira.
@@ -26,15 +26,10 @@ variable "JIRA_API_TOKEN" {
   sensitive   = true
 }
 
-variable "TELEGRAM_JIRA_BOT_TOKEN" {
-  type        = string
-  description = "Token bot Telegram dùng cho luồng Telegram Jira (có thể trùng bot của luồng khác)"
-  sensitive   = true
-}
-
 variable "TELEGRAM_JIRA_CHAT_ID" {
   type        = string
-  description = "Chat ID cá nhân hoặc nhóm nhận thông báo Jira"
+  description = "Chat ID nhận thông báo Jira. Bỏ trống (không khai báo trong Doppler) thì dùng TELEGRAM_HOOKDECK_CHAT_ID"
+  default     = ""
 }
 
 variable "telegram_jira_name" {
@@ -76,21 +71,13 @@ resource "hookdeck_source" "telegram_jira" {
   type = "WEBHOOK"
 }
 
-# 2. Destination trỏ thẳng đến endpoint sendMessage của Telegram
-resource "hookdeck_destination" "telegram_jira" {
-  name = "${var.telegram_jira_name}-bot"
-  type = "HTTP"
-  config = jsonencode({
-    url         = "https://api.telegram.org/bot${var.TELEGRAM_JIRA_BOT_TOKEN}/sendMessage"
-    http_method = "POST"
-  })
-}
+# 2. Destination: dùng chung hookdeck_destination.telegram (telegram.tf)
 
 # 3. Transformation chuyển payload Jira thành tin nhắn Telegram dễ đọc
 resource "hookdeck_transformation" "telegram_jira" {
   name = "${var.telegram_jira_name}-format"
   env = jsonencode({
-    TELEGRAM_CHAT_ID = var.TELEGRAM_JIRA_CHAT_ID
+    TELEGRAM_CHAT_ID = var.TELEGRAM_JIRA_CHAT_ID != "" ? var.TELEGRAM_JIRA_CHAT_ID : var.TELEGRAM_HOOKDECK_CHAT_ID
   })
   code = <<-EOT
     addHandler('transform', (request, context) => {
@@ -155,9 +142,10 @@ resource "hookdeck_transformation" "telegram_jira" {
 resource "hookdeck_connection" "telegram_jira" {
   name           = "${var.telegram_jira_name}-connection"
   source_id      = hookdeck_source.telegram_jira.id
-  destination_id = hookdeck_destination.telegram_jira.id
+  destination_id = hookdeck_destination.telegram.id
 
   rules = [
+    local.telegram_retry_rule,
     {
       filter_rule = {
         body = {
