@@ -2,7 +2,7 @@
 # Telegram Doppler: thông báo khi secret trong Doppler thay đổi
 #
 #   Doppler webhook -> Source DOPPLER (Hookdeck kiểm tra chữ ký HMAC)
-#     -> Transformation -> Telegram (TELEGRAM_DOPPLER_CHAT_ID)
+#     -> Transformation -> Telegram (topic TELEGRAM_DOPPLER_THREAD_ID)
 #
 # Webhook trên Doppler do Terraform tạo (mỗi project một webhook) với url = Source URL
 # và secret tự sinh. Tin nhắn chỉ có TÊN secret thay đổi, không bao giờ có giá trị.
@@ -14,12 +14,6 @@ variable "DOPPLER_API_TOKEN" {
   type        = string
   description = "Doppler token có quyền ghi vào các project bên dưới để quản lý webhook (personal hoặc service account token, KHÔNG phải service token chỉ đọc)"
   sensitive   = true
-}
-
-variable "TELEGRAM_DOPPLER_CHAT_ID" {
-  type        = string
-  description = "Chat ID nhận thông báo Doppler. Bỏ trống thì dùng TELEGRAM_HOOKDECK_CHAT_ID"
-  default     = ""
 }
 
 variable "TELEGRAM_DOPPLER_THREAD_ID" {
@@ -71,7 +65,7 @@ resource "hookdeck_transformation" "telegram_doppler" {
   name = "${var.telegram_doppler_name}-format"
   # Hookdeck không nhận giá trị rỗng trong env: bỏ các biến chưa cấu hình
   env = jsonencode({ for k, v in {
-    TELEGRAM_CHAT_ID   = var.TELEGRAM_DOPPLER_CHAT_ID != "" ? var.TELEGRAM_DOPPLER_CHAT_ID : var.TELEGRAM_HOOKDECK_CHAT_ID
+    TELEGRAM_CHAT_ID   = var.TELEGRAM_CHAT_ID
     TELEGRAM_THREAD_ID = var.TELEGRAM_DOPPLER_THREAD_ID
   } : k => v if v != "" })
   code = <<-EOT

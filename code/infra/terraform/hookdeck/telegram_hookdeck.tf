@@ -9,11 +9,6 @@
 
 # ----- Biến (secret lưu trong Doppler cùng tên) -----
 
-variable "TELEGRAM_HOOKDECK_CHAT_ID" {
-  type        = string
-  description = "Chat ID mặc định: nhận thông báo của luồng Telegram Hookdeck và của các luồng không khai báo chat riêng"
-}
-
 variable "TELEGRAM_HOOKDECK_THREAD_ID" {
   type        = string
   description = "Topic ID (message_thread_id) trong supergroup bật Topics. Bỏ trống thì gửi vào chat chính"
@@ -42,7 +37,7 @@ resource "hookdeck_transformation" "telegram_hookdeck" {
   name = "${var.telegram_hookdeck_name}-format"
   # Hookdeck không nhận giá trị rỗng trong env: bỏ các biến chưa cấu hình
   env = jsonencode({ for k, v in {
-    TELEGRAM_CHAT_ID   = var.TELEGRAM_HOOKDECK_CHAT_ID
+    TELEGRAM_CHAT_ID   = var.TELEGRAM_CHAT_ID
     TELEGRAM_THREAD_ID = var.TELEGRAM_HOOKDECK_THREAD_ID
   } : k => v if v != "" })
   code = <<-EOT

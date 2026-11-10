@@ -2,7 +2,7 @@
 # Telegram GitHub: thông báo sự kiện GitHub (push, PR, issue, CI/CD) vào Telegram
 #
 #   GitHub org webhook -> Source GITHUB (Hookdeck kiểm tra chữ ký HMAC)
-#     -> connection chính : Transformation -> Telegram (TELEGRAM_GITHUB_CHAT_ID)
+#     -> connection chính : Transformation -> Telegram (topic TELEGRAM_GITHUB_THREAD_ID)
 #     -> connection alert : Transformation (chỉ CI/CD lỗi) -> Telegram (chat/topic cảnh báo, nếu khai báo)
 #
 # Webhook trên GitHub do Terraform tạo với url = Source URL và secret tự sinh,
@@ -17,18 +17,6 @@ variable "GITHUB_TOKEN" {
   sensitive   = true
 }
 
-variable "TELEGRAM_GITHUB_CHAT_ID" {
-  type        = string
-  description = "Chat ID nhận thông báo GitHub. Bỏ trống thì dùng TELEGRAM_HOOKDECK_CHAT_ID"
-  default     = ""
-}
-
-variable "TELEGRAM_GITHUB_ALERT_CHAT_ID" {
-  type        = string
-  description = "Chat ID nhận cảnh báo khi CI/CD lỗi. Bỏ trống thì dùng chat của luồng GitHub"
-  default     = ""
-}
-
 variable "TELEGRAM_GITHUB_THREAD_ID" {
   type        = string
   description = "Topic ID nhận thông báo GitHub. Bỏ trống thì gửi vào chat chính"
@@ -37,7 +25,7 @@ variable "TELEGRAM_GITHUB_THREAD_ID" {
 
 variable "TELEGRAM_GITHUB_ALERT_THREAD_ID" {
   type        = string
-  description = "Topic ID nhận cảnh báo CI/CD lỗi (ví dụ topic Alerts)."
+  description = "Topic ID nhận cảnh báo CI/CD lỗi (topic Alerts). Bỏ trống thì không tạo connection cảnh báo"
   default     = ""
 }
 
@@ -87,11 +75,8 @@ resource "hookdeck_source" "telegram_github" {
 }
 
 locals {
-  telegram_github_chat_id = var.TELEGRAM_GITHUB_CHAT_ID != "" ? var.TELEGRAM_GITHUB_CHAT_ID : var.TELEGRAM_HOOKDECK_CHAT_ID
-
-  # Bật connection cảnh báo khi khai báo chat hoặc topic cảnh báo
-  telegram_github_alert_enabled = var.TELEGRAM_GITHUB_ALERT_CHAT_ID != "" || var.TELEGRAM_GITHUB_ALERT_THREAD_ID != ""
-  telegram_github_alert_chat_id = var.TELEGRAM_GITHUB_ALERT_CHAT_ID != "" ? var.TELEGRAM_GITHUB_ALERT_CHAT_ID : local.telegram_github_chat_id
+  # Bật connection cảnh báo khi đã có topic cảnh báo
+  telegram_github_alert_enabled = var.TELEGRAM_GITHUB_ALERT_THREAD_ID != ""
 
   # Code transformation dùng chung cho connection chính và connection alert.
   # ONLY_FAILED_WORKFLOW = "true": chỉ tạo tin nhắn khi CI/CD lỗi.
@@ -197,7 +182,7 @@ resource "hookdeck_transformation" "telegram_github" {
   name = "${var.telegram_github_name}-format"
   # Hookdeck không nhận giá trị rỗng trong env: bỏ các biến chưa cấu hình
   env = jsonencode({ for k, v in {
-    TELEGRAM_CHAT_ID     = local.telegram_github_chat_id
+    TELEGRAM_CHAT_ID     = var.TELEGRAM_CHAT_ID
     TELEGRAM_THREAD_ID   = var.TELEGRAM_GITHUB_THREAD_ID
     ONLY_FAILED_WORKFLOW = "false"
   } : k => v if v != "" })
@@ -227,7 +212,7 @@ resource "hookdeck_transformation" "telegram_github_alert" {
   name = "${var.telegram_github_name}-alert-format"
   # Hookdeck không nhận giá trị rỗng trong env: bỏ các biến chưa cấu hình
   env = jsonencode({ for k, v in {
-    TELEGRAM_CHAT_ID     = local.telegram_github_alert_chat_id
+    TELEGRAM_CHAT_ID     = var.TELEGRAM_CHAT_ID
     TELEGRAM_THREAD_ID   = var.TELEGRAM_GITHUB_ALERT_THREAD_ID
     ONLY_FAILED_WORKFLOW = "true"
   } : k => v if v != "" })
