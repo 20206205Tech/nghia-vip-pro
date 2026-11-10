@@ -1,0 +1,75 @@
+# Workflow dùng chung cho mọi module trong code/infra/terraform/<module>
+# Các workflow module chỉ cần gọi: uses: ./.github/workflows/terraform.yml
+name: terraform
+
+on:
+  workflow_call:
+    inputs:
+      module:
+        description: Tên thư mục trong code/infra/terraform
+        required: true
+        type: string
+    secrets:
+      DOPPLER_TOKEN:
+        required: true
+
+jobs:
+  terraform:
+    name: ${{ inputs.module }}
+    # xxxx chỉ là mẫu để copy, không chạy terraform
+    if: inputs.module != 'xxxx'
+    runs-on: ubuntu-latest
+
+    concurrency:
+      group: terraform-${{ inputs.module }}
+      cancel-in-progress: false
+
+    defaults:
+      run:
+        working-directory: ./code/infra/terraform/${{ inputs.module }}
+
+    env:
+      TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+      TF_IN_AUTOMATION: "true"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Terraform Plugin Cache Dir
+        run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
+
+      - name: Cache Terraform Providers
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.TF_PLUGIN_CACHE_DIR }}
+          key: ${{ runner.os }}-terraform-${{ inputs.module }}-${{ hashFiles(format('code/infra/terraform/{0}/versions.tf', inputs.module)) }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-${{ inputs.module }}-
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v3
+
+      - name: Load needed secrets from Doppler
+        working-directory: ${{ github.workspace }}
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: bash scripts/doppler-tf-env.sh "code/infra/terraform/${{ inputs.module }}"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.0"
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -input=false
+
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: terraform apply -auto-approve -input=false

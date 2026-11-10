@@ -1,0 +1,26 @@
+name: xxxx
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "code/infra/terraform/xxxx/**"
+      - ".github/workflows/xxxx.yml"
+      - ".github/workflows/terraform.yml"
+      - "scripts/doppler-tf-env.sh"
+  pull_request:
+    branches: [main]
+    paths:
+      - "code/infra/terraform/xxxx/**"
+      - ".github/workflows/xxxx.yml"
+      - ".github/workflows/terraform.yml"
+      - "scripts/doppler-tf-env.sh"
+
+jobs:
+  xxxx:
+    uses: ./.github/workflows/terraform.yml
+    with:
+      module: xxxx
+    secrets:
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
