@@ -38,13 +38,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Create Terraform Plugin Cache Dir
         run: mkdir -p ${{ env.TF_PLUGIN_CACHE_DIR }}
 
       - name: Cache Terraform Providers
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ env.TF_PLUGIN_CACHE_DIR }}
           key: ${{ runner.os }}-terraform-${{ inputs.module }}-${{ hashFiles(format('code/infra/terraform/{0}/versions.tf', inputs.module)) }}
@@ -52,7 +52,7 @@ jobs:
             ${{ runner.os }}-terraform-${{ inputs.module }}-
 
       - name: Install Doppler CLI
-        uses: dopplerhq/cli-action@v3
+        uses: dopplerhq/cli-action@v4
 
       - name: Load needed secrets from Doppler
         working-directory: ${{ github.workspace }}
@@ -61,7 +61,7 @@ jobs:
         run: bash scripts/doppler-tf-env.sh "code/infra/terraform/${{ inputs.module }}"
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: "1.7.0"
 
@@ -79,7 +79,7 @@ jobs:
 
       - name: In kết quả plan lên Pull Request
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           MODULE: ${{ inputs.module }}
           PLAN_OUTCOME: ${{ steps.plan.outcome }}
