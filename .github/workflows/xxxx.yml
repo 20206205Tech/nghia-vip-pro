@@ -3,24 +3,19 @@ name: xxxx
 on:
   workflow_dispatch:
   push:
-    branches: [main, stg, dev]
+    branches: [main]
     paths:
       - "code/infra/terraform/xxxx/**"
       - ".github/workflows/xxxx.yml"
       - ".github/workflows/terraform.yml"
       - "scripts/doppler-tf-env.sh"
   pull_request:
-    branches: [main, stg, dev]
+    branches: [main]
     paths:
       - "code/infra/terraform/xxxx/**"
       - ".github/workflows/xxxx.yml"
       - ".github/workflows/terraform.yml"
       - "scripts/doppler-tf-env.sh"
-
-# Cần quyền ghi PR để comment kết quả terraform plan
-permissions:
-  contents: read
-  pull-requests: write
 
 jobs:
   xxxx:

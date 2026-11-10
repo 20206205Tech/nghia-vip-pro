@@ -30,7 +30,3 @@ crash.log
 crash.*.log
 
 .terraform.tfstate.lock.info
-
-# Output của terraform plan trong CI
-plan.txt
-tfplan
