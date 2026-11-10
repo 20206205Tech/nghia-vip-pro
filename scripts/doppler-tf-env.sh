@@ -15,6 +15,13 @@ set -euo pipefail
 dir="${1:?Thiếu tham số: thư mục module terraform}"
 
 command -v doppler >/dev/null || { echo "Thiếu Doppler CLI" >&2; exit 1; }
+
+# Kiểm tra kết nối Doppler trước, tránh lỗi im lặng khi thiếu/sai DOPPLER_TOKEN
+if ! err=$(doppler secrets --only-names 2>&1 >/dev/null); then
+  echo "Không kết nối được Doppler (kiểm tra secret DOPPLER_TOKEN trên GitHub hoặc 'doppler setup'):" >&2
+  echo "$err" >&2
+  exit 1
+fi
 compgen -G "$dir/*.tf" >/dev/null || { echo "Không có file .tf trong $dir" >&2; exit 1; }
 
 # Tên các biến được khai báo trong module
