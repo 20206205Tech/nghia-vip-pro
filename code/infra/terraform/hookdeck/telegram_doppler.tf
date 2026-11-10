@@ -31,7 +31,7 @@ variable "TELEGRAM_DOPPLER_THREAD_ID" {
 variable "telegram_doppler_projects" {
   type        = list(string)
   description = "Các project Doppler cần theo dõi (mỗi project một webhook)"
-  default     = ["infra"]
+  default     = ["nghia-vip-pro-infra"]
 }
 
 variable "telegram_doppler_name" {
