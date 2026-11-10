@@ -8,14 +8,14 @@ on:
       - "code/infra/terraform/xxxx/**"
       - ".github/workflows/xxxx.yml"
       - ".github/workflows/terraform.yml"
-      - "scripts/doppler-tf-env.sh"
+      - "scripts/**"
   pull_request:
     branches: [main]
     paths:
       - "code/infra/terraform/xxxx/**"
       - ".github/workflows/xxxx.yml"
       - ".github/workflows/terraform.yml"
-      - "scripts/doppler-tf-env.sh"
+      - "scripts/**"
 
 # Cần quyền ghi PR để in kết quả terraform plan
 permissions:

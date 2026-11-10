@@ -8,14 +8,14 @@ on:
       - "code/infra/terraform/hookdeck/**"
       - ".github/workflows/hookdeck.yml"
       - ".github/workflows/terraform.yml"
-      - "scripts/doppler-tf-env.sh"
+      - "scripts/**"
   pull_request:
     branches: [main]
     paths:
       - "code/infra/terraform/hookdeck/**"
       - ".github/workflows/hookdeck.yml"
       - ".github/workflows/terraform.yml"
-      - "scripts/doppler-tf-env.sh"
+      - "scripts/**"
 
 # Cần quyền ghi PR để in kết quả terraform plan
 permissions:
