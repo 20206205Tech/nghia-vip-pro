@@ -1,7 +1,7 @@
 # =============================================================================
 # Telegram Hookdeck: chuyển webhook bất kỳ thành tin nhắn Telegram
 #
-#   Webhook -> Source -> Transformation (định dạng tin nhắn) -> Destination (Telegram sendMessage)
+#   Webhook -> Source -> Transformation (định dạng tin nhắn) -> Destination Telegram dùng chung (telegram.tf)
 #
 # Mỗi luồng Telegram nằm trong một file riêng. Thêm luồng mới: copy file này,
 # đổi tiền tố "telegram_hookdeck" / "TELEGRAM_HOOKDECK" sang tên luồng mới.
@@ -9,15 +9,9 @@
 
 # ----- Biến (secret lưu trong Doppler cùng tên) -----
 
-variable "TELEGRAM_HOOKDECK_BOT_TOKEN" {
-  type        = string
-  description = "Token bot Telegram (BotFather) dùng cho luồng Telegram Hookdeck"
-  sensitive   = true
-}
-
 variable "TELEGRAM_HOOKDECK_CHAT_ID" {
   type        = string
-  description = "Chat ID cá nhân hoặc nhóm nhận thông báo của luồng Telegram Hookdeck"
+  description = "Chat ID mặc định: nhận thông báo của luồng Telegram Hookdeck và của các luồng không khai báo chat riêng"
 }
 
 variable "telegram_hookdeck_name" {
@@ -34,15 +28,7 @@ resource "hookdeck_source" "telegram_hookdeck" {
   type = "WEBHOOK"
 }
 
-# 2. Destination trỏ thẳng đến endpoint sendMessage của Telegram
-resource "hookdeck_destination" "telegram_hookdeck" {
-  name = "${var.telegram_hookdeck_name}-bot"
-  type = "HTTP"
-  config = jsonencode({
-    url         = "https://api.telegram.org/bot${var.TELEGRAM_HOOKDECK_BOT_TOKEN}/sendMessage"
-    http_method = "POST"
-  })
-}
+# 2. Destination: dùng chung hookdeck_destination.telegram (telegram.tf)
 
 # 3. Transformation định dạng lại body sang chuẩn Telegram API
 #    chat_id truyền qua env, không ghép thẳng vào code
@@ -90,9 +76,10 @@ resource "hookdeck_transformation" "telegram_hookdeck" {
 resource "hookdeck_connection" "telegram_hookdeck" {
   name           = "${var.telegram_hookdeck_name}-connection"
   source_id      = hookdeck_source.telegram_hookdeck.id
-  destination_id = hookdeck_destination.telegram_hookdeck.id
+  destination_id = hookdeck_destination.telegram.id
 
   rules = [
+    local.telegram_retry_rule,
     {
       transform_rule = {
         transformation_id = hookdeck_transformation.telegram_hookdeck.id
