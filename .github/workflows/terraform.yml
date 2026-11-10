@@ -20,6 +20,10 @@ jobs:
     if: inputs.module != 'xxxx'
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      pull-requests: write
+
     concurrency:
       group: terraform-${{ inputs.module }}
       cancel-in-progress: false
@@ -67,8 +71,62 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
+      # Wrapper của setup-terraform giữ output trong steps.plan.outputs.stdout, không cần ghi file
       - name: Terraform Plan
-        run: terraform plan -input=false
+        id: plan
+        continue-on-error: true
+        run: terraform plan -input=false -no-color
+
+      - name: In kết quả plan lên Pull Request
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          MODULE: ${{ inputs.module }}
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
+          PLAN_STDOUT: ${{ steps.plan.outputs.stdout }}
+          PLAN_STDERR: ${{ steps.plan.outputs.stderr }}
+        with:
+          script: |
+            const { MODULE, PLAN_OUTCOME, PLAN_STDOUT, PLAN_STDERR } = process.env;
+            let plan = [PLAN_STDOUT, PLAN_STDERR].filter(Boolean).join('\n') || '(không có output)';
+            const MAX = 60000;
+            if (plan.length > MAX) plan = '...(đã cắt bớt, xem log đầy đủ trong Actions)\n' + plan.slice(-MAX);
+
+            const summary = plan.match(/^(Plan: .*|No changes\..*)$/m)?.[0] ?? '';
+            const marker = `<!-- terraform-plan:${MODULE} -->`;
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              marker,
+              `### Terraform plan \`${MODULE}\`: ${PLAN_OUTCOME === 'success' ? '✅' : '❌'} ${PLAN_OUTCOME}`,
+              '',
+              summary && `**${summary}**`,
+              '',
+              '<details><summary>Xem plan</summary>',
+              '',
+              '```terraform',
+              plan,
+              '```',
+              '</details>',
+              '',
+              `Commit \`${context.sha.slice(0, 7)}\` · [Xem log](${runUrl})`,
+            ].join('\n');
+
+            // Sửa comment cũ của module này thay vì tạo comment mới mỗi lần push
+            const { data: comments } = await github.rest.issues.listComments({
+              ...context.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const old = comments.find((c) => c.body?.includes(marker));
+            if (old) {
+              await github.rest.issues.updateComment({ ...context.repo, comment_id: old.id, body });
+            } else {
+              await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number, body });
+            }
+
+      - name: Dừng nếu plan lỗi
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
