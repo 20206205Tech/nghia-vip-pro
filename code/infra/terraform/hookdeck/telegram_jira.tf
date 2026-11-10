@@ -32,6 +32,12 @@ variable "TELEGRAM_JIRA_CHAT_ID" {
   default     = ""
 }
 
+variable "TELEGRAM_JIRA_THREAD_ID" {
+  type        = string
+  description = "Topic ID nhận thông báo Jira. Bỏ trống thì gửi vào chat chính"
+  default     = ""
+}
+
 variable "telegram_jira_name" {
   type        = string
   description = "Tiền tố tên các resource của luồng Telegram Jira trên Hookdeck và Jira"
@@ -77,7 +83,8 @@ resource "hookdeck_source" "telegram_jira" {
 resource "hookdeck_transformation" "telegram_jira" {
   name = "${var.telegram_jira_name}-format"
   env = jsonencode({
-    TELEGRAM_CHAT_ID = var.TELEGRAM_JIRA_CHAT_ID != "" ? var.TELEGRAM_JIRA_CHAT_ID : var.TELEGRAM_HOOKDECK_CHAT_ID
+    TELEGRAM_CHAT_ID   = var.TELEGRAM_JIRA_CHAT_ID != "" ? var.TELEGRAM_JIRA_CHAT_ID : var.TELEGRAM_HOOKDECK_CHAT_ID
+    TELEGRAM_THREAD_ID = var.TELEGRAM_JIRA_THREAD_ID
   })
   code = <<-EOT
     addHandler('transform', (request, context) => {
@@ -131,6 +138,10 @@ resource "hookdeck_transformation" "telegram_jira" {
         parse_mode: 'HTML',
         disable_web_page_preview: true
       };
+      // Gửi vào topic (supergroup bật Topics) nếu có TELEGRAM_THREAD_ID
+      if (request.body && request.body.chat_id && process.env.TELEGRAM_THREAD_ID) {
+        request.body.message_thread_id = Number(process.env.TELEGRAM_THREAD_ID);
+      }
       request.headers = request.headers || {};
       request.headers['content-type'] = 'application/json';
       return request;

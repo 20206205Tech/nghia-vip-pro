@@ -22,6 +22,12 @@ variable "TELEGRAM_DOPPLER_CHAT_ID" {
   default     = ""
 }
 
+variable "TELEGRAM_DOPPLER_THREAD_ID" {
+  type        = string
+  description = "Topic ID nhận thông báo Doppler. Bỏ trống thì gửi vào chat chính"
+  default     = ""
+}
+
 variable "telegram_doppler_projects" {
   type        = list(string)
   description = "Các project Doppler cần theo dõi (mỗi project một webhook)"
@@ -64,7 +70,8 @@ resource "hookdeck_source" "telegram_doppler" {
 resource "hookdeck_transformation" "telegram_doppler" {
   name = "${var.telegram_doppler_name}-format"
   env = jsonencode({
-    TELEGRAM_CHAT_ID = var.TELEGRAM_DOPPLER_CHAT_ID != "" ? var.TELEGRAM_DOPPLER_CHAT_ID : var.TELEGRAM_HOOKDECK_CHAT_ID
+    TELEGRAM_CHAT_ID   = var.TELEGRAM_DOPPLER_CHAT_ID != "" ? var.TELEGRAM_DOPPLER_CHAT_ID : var.TELEGRAM_HOOKDECK_CHAT_ID
+    TELEGRAM_THREAD_ID = var.TELEGRAM_DOPPLER_THREAD_ID
   })
   code = <<-EOT
     addHandler('transform', (request, context) => {
@@ -112,6 +119,10 @@ resource "hookdeck_transformation" "telegram_doppler" {
             disable_web_page_preview: true
           }
         : {};
+      // Gửi vào topic (supergroup bật Topics) nếu có TELEGRAM_THREAD_ID
+      if (request.body && request.body.chat_id && process.env.TELEGRAM_THREAD_ID) {
+        request.body.message_thread_id = Number(process.env.TELEGRAM_THREAD_ID);
+      }
       request.headers = request.headers || {};
       request.headers['content-type'] = 'application/json';
       return request;
