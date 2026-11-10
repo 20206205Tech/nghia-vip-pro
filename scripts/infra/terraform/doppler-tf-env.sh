@@ -3,9 +3,9 @@
 # và xuất ra dạng TF_VAR_X. Secret chỉ nằm trong Doppler, không đồng bộ sang Terraform Cloud.
 #
 # Cách dùng:
-#   GitHub Actions : bash scripts/terraform/doppler-tf-env.sh code/infra/terraform/<module>
+#   GitHub Actions : bash scripts/infra/terraform/doppler-tf-env.sh code/infra/terraform/<module>
 #                    (tự ghi vào $GITHUB_ENV và che giá trị trong log)
-#   Máy local      : eval "$(bash scripts/terraform/doppler-tf-env.sh code/infra/terraform/<module>)"
+#   Máy local      : eval "$(bash scripts/infra/terraform/doppler-tf-env.sh code/infra/terraform/<module>)"
 #
 # Yêu cầu: Doppler CLI (đã login hoặc có DOPPLER_TOKEN).
 # Ngoài biến trong *.tf, script còn lấy TF_API_TOKEN để đăng nhập Terraform Cloud.

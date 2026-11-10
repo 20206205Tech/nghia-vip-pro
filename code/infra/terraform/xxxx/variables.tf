@@ -1,5 +1,5 @@
 # Biến bí mật: không đặt default, lưu trong Doppler cùng tên (XXXX_API_TOKEN)
-# scripts/terraform/doppler-tf-env.sh chỉ lấy những biến khai báo ở đây
+# scripts/infra/terraform/doppler-tf-env.sh chỉ lấy những biến khai báo ở đây
 variable "XXXX_API_TOKEN" {
   type        = string
   description = "Token xác thực API của xxxx"

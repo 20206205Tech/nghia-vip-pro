@@ -8,14 +8,14 @@ on:
       - "code/infra/terraform/hookdeck/**"
       - ".github/workflows/hookdeck.yml"
       - ".github/workflows/terraform.yml"
-      - "scripts/terraform/**"
+      - "scripts/infra/terraform/**"
   pull_request:
     branches: [main]
     paths:
       - "code/infra/terraform/hookdeck/**"
       - ".github/workflows/hookdeck.yml"
       - ".github/workflows/terraform.yml"
-      - "scripts/terraform/**"
+      - "scripts/infra/terraform/**"
 
 # Cần quyền ghi PR để in kết quả terraform plan
 permissions:
