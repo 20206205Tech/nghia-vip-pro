@@ -37,12 +37,6 @@ variable "JIRA_WEBHOOK_SECRET" {
   default     = ""
 }
 
-variable "TELEGRAM_JIRA_CHAT_ID" {
-  type        = string
-  description = "Chat ID nhận thông báo Jira. Bỏ trống (không khai báo trong Doppler) thì dùng TELEGRAM_HOOKDECK_CHAT_ID"
-  default     = ""
-}
-
 variable "TELEGRAM_JIRA_THREAD_ID" {
   type        = string
   description = "Topic ID nhận thông báo Jira. Bỏ trống thì gửi vào chat chính"
@@ -95,7 +89,7 @@ resource "hookdeck_transformation" "telegram_jira" {
   name = "${var.telegram_jira_name}-format"
   # Hookdeck không nhận giá trị rỗng trong env: bỏ các biến chưa cấu hình
   env = jsonencode({ for k, v in {
-    TELEGRAM_CHAT_ID   = var.TELEGRAM_JIRA_CHAT_ID != "" ? var.TELEGRAM_JIRA_CHAT_ID : var.TELEGRAM_HOOKDECK_CHAT_ID
+    TELEGRAM_CHAT_ID   = var.TELEGRAM_CHAT_ID
     TELEGRAM_THREAD_ID = var.TELEGRAM_JIRA_THREAD_ID
   } : k => v if v != "" })
   code = <<-EOT
