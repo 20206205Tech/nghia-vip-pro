@@ -195,11 +195,12 @@ locals {
 # 2. Transformation + connection chính: mọi sự kiện hỗ trợ
 resource "hookdeck_transformation" "telegram_github" {
   name = "${var.telegram_github_name}-format"
-  env = jsonencode({
+  # Hookdeck không nhận giá trị rỗng trong env: bỏ các biến chưa cấu hình
+  env = jsonencode({ for k, v in {
     TELEGRAM_CHAT_ID     = local.telegram_github_chat_id
     TELEGRAM_THREAD_ID   = var.TELEGRAM_GITHUB_THREAD_ID
     ONLY_FAILED_WORKFLOW = "false"
-  })
+  } : k => v if v != "" })
   code = local.telegram_github_code
 }
 
@@ -224,11 +225,12 @@ resource "hookdeck_transformation" "telegram_github_alert" {
   count = local.telegram_github_alert_enabled ? 1 : 0
 
   name = "${var.telegram_github_name}-alert-format"
-  env = jsonencode({
+  # Hookdeck không nhận giá trị rỗng trong env: bỏ các biến chưa cấu hình
+  env = jsonencode({ for k, v in {
     TELEGRAM_CHAT_ID     = local.telegram_github_alert_chat_id
     TELEGRAM_THREAD_ID   = var.TELEGRAM_GITHUB_ALERT_THREAD_ID
     ONLY_FAILED_WORKFLOW = "true"
-  })
+  } : k => v if v != "" })
   code = local.telegram_github_code
 }
 
