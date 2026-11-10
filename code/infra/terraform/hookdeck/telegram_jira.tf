@@ -1,0 +1,191 @@
+# =============================================================================
+# Telegram Jira: thông báo sự kiện Jira (issue, comment) vào Telegram
+#
+#   Jira webhook -> Source -> Transformation (định dạng sự kiện Jira) -> Destination (Telegram sendMessage)
+#
+# Webhook trên Jira được Terraform tạo luôn với url = hookdeck_source.telegram_jira.url,
+# nên trong cùng một lần apply: tạo Source trước, rồi tạo/cập nhật webhook Jira.
+# Nếu URL của Source đổi, webhook Jira cũng tự được cập nhật, không cần chạy CI/CD riêng.
+# =============================================================================
+
+# ----- Biến (secret lưu trong Doppler cùng tên) -----
+
+variable "JIRA_URL" {
+  type        = string
+  description = "Địa chỉ Jira, ví dụ https://<ten-cong-ty>.atlassian.net"
+}
+
+variable "JIRA_USER" {
+  type        = string
+  description = "Email tài khoản Jira (cần quyền Jira admin để quản lý webhook)"
+}
+
+variable "JIRA_API_TOKEN" {
+  type        = string
+  description = "API token của tài khoản Jira (id.atlassian.com > Security > API tokens)"
+  sensitive   = true
+}
+
+variable "TELEGRAM_JIRA_BOT_TOKEN" {
+  type        = string
+  description = "Token bot Telegram dùng cho luồng Telegram Jira (có thể trùng bot của luồng khác)"
+  sensitive   = true
+}
+
+variable "TELEGRAM_JIRA_CHAT_ID" {
+  type        = string
+  description = "Chat ID cá nhân hoặc nhóm nhận thông báo Jira"
+}
+
+variable "telegram_jira_name" {
+  type        = string
+  description = "Tiền tố tên các resource của luồng Telegram Jira trên Hookdeck và Jira"
+  default     = "telegram-jira"
+}
+
+variable "telegram_jira_events" {
+  type        = list(string)
+  description = "Các sự kiện Jira gửi về webhook"
+  default = [
+    "jira:issue_created",
+    "jira:issue_updated",
+    "jira:issue_deleted",
+    "comment_created",
+  ]
+}
+
+variable "telegram_jira_jql" {
+  type        = string
+  description = "JQL lọc issue gửi webhook, để trống là mọi issue (ví dụ: project = ABC)"
+  default     = ""
+}
+
+# ----- Provider Jira -----
+
+provider "jira" {
+  url      = var.JIRA_URL
+  user     = var.JIRA_USER
+  password = var.JIRA_API_TOKEN
+}
+
+# ----- Resource trên Hookdeck -----
+
+# 1. Source nhận webhook từ Jira
+resource "hookdeck_source" "telegram_jira" {
+  name = "${var.telegram_jira_name}-inbound"
+  type = "WEBHOOK"
+}
+
+# 2. Destination trỏ thẳng đến endpoint sendMessage của Telegram
+resource "hookdeck_destination" "telegram_jira" {
+  name = "${var.telegram_jira_name}-bot"
+  type = "HTTP"
+  config = jsonencode({
+    url         = "https://api.telegram.org/bot${var.TELEGRAM_JIRA_BOT_TOKEN}/sendMessage"
+    http_method = "POST"
+  })
+}
+
+# 3. Transformation chuyển payload Jira thành tin nhắn Telegram dễ đọc
+resource "hookdeck_transformation" "telegram_jira" {
+  name = "${var.telegram_jira_name}-format"
+  env = jsonencode({
+    TELEGRAM_CHAT_ID = var.TELEGRAM_JIRA_CHAT_ID
+  })
+  code = <<-EOT
+    addHandler('transform', (request, context) => {
+      const esc = (s) => String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const cut = (s, n) => (s.length > n ? s.slice(0, n) + '…' : s);
+
+      const b = request.body && typeof request.body === 'object' ? request.body : {};
+      const event = b.webhookEvent || 'unknown';
+      const issue = b.issue || {};
+      const f = issue.fields || {};
+
+      const titles = {
+        'jira:issue_created': '🆕 Issue mới',
+        'jira:issue_updated': '✏️ Issue được cập nhật',
+        'jira:issue_deleted': '🗑️ Issue bị xóa',
+        'comment_created': '💬 Bình luận mới',
+        'comment_updated': '💬 Bình luận được sửa'
+      };
+      const lines = ['<b>' + esc(titles[event] || '🔔 ' + event) + '</b>'];
+
+      if (issue.key) {
+        const base = String(issue.self || '').split('/rest/')[0];
+        const key = esc(issue.key);
+        const link = base ? '<a href="' + esc(base + '/browse/' + issue.key) + '">' + key + '</a>' : key;
+        lines.push(link + ': ' + esc(f.summary));
+      }
+      if (f.issuetype && f.issuetype.name) lines.push('Loại: ' + esc(f.issuetype.name));
+      if (f.status && f.status.name) lines.push('Trạng thái: ' + esc(f.status.name));
+      if (f.priority && f.priority.name) lines.push('Độ ưu tiên: ' + esc(f.priority.name));
+      lines.push('Người xử lý: ' + esc(f.assignee && f.assignee.displayName ? f.assignee.displayName : 'Chưa giao'));
+
+      const actor = (b.user && b.user.displayName) ||
+        (b.comment && b.comment.author && b.comment.author.displayName) || '';
+      if (actor) lines.push('Bởi: ' + esc(actor));
+
+      // Các trường thay đổi (issue_updated), tối đa 5 dòng
+      const items = (b.changelog && b.changelog.items) || [];
+      items.slice(0, 5).forEach((it) => {
+        lines.push('• ' + esc(it.field) + ': ' + esc(cut(String(it.fromString || '∅'), 100)) +
+          ' → ' + esc(cut(String(it.toString || '∅'), 100)));
+      });
+
+      if (b.comment && b.comment.body) {
+        lines.push('<i>' + esc(cut(String(b.comment.body), 1500)) + '</i>');
+      }
+
+      request.body = {
+        chat_id: process.env.TELEGRAM_CHAT_ID,
+        text: cut(lines.join('\n'), 4000),
+        parse_mode: 'HTML',
+        disable_web_page_preview: true
+      };
+      request.headers = request.headers || {};
+      request.headers['content-type'] = 'application/json';
+      return request;
+    });
+  EOT
+}
+
+# 4. Connection: chỉ nhận request có trường webhookEvent (payload của Jira)
+resource "hookdeck_connection" "telegram_jira" {
+  name           = "${var.telegram_jira_name}-connection"
+  source_id      = hookdeck_source.telegram_jira.id
+  destination_id = hookdeck_destination.telegram_jira.id
+
+  rules = [
+    {
+      filter_rule = {
+        body = {
+          json = jsonencode({ webhookEvent = { "$exist" = true } })
+        }
+      }
+    },
+    {
+      transform_rule = {
+        transformation_id = hookdeck_transformation.telegram_jira.id
+      }
+    }
+  ]
+}
+
+# ----- Resource trên Jira -----
+
+# 5. Webhook Jira trỏ về Source của Hookdeck, URL luôn đồng bộ với output
+resource "jira_webhook" "telegram_jira" {
+  name   = var.telegram_jira_name
+  url    = hookdeck_source.telegram_jira.url
+  events = var.telegram_jira_events
+  jql    = var.telegram_jira_jql == "" ? null : var.telegram_jira_jql
+}
+
+# ----- Output -----
+
+output "telegram_jira_webhook_url" {
+  description = "URL nhận webhook của luồng Telegram Jira (đã tự cấu hình vào Jira)"
+  value       = hookdeck_source.telegram_jira.url
+}
