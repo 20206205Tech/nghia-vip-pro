@@ -34,7 +34,7 @@ terraform {
   }
 }
 
-# Token lấy từ variables (scripts/terraform/doppler-tf-env.sh xuất TF_VAR_*)
+# Token lấy từ variables (scripts/infra/terraform/doppler-tf-env.sh xuất TF_VAR_*)
 provider "hookdeck" {
   api_key = var.HOOKDECK_API_KEY
 }
