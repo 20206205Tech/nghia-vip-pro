@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Provider Terraform của từng module trong code/infra/terraform/<module>
+  - package-ecosystem: "terraform"
+    directories:
+      - "/code/infra/terraform/*"
+    target-branch: "dev" # đi theo luồng dev -> stg -> main
+    schedule:
+      interval: "weekly"
+
+  # Các action dùng trong .github/workflows/*.yml
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    target-branch: "dev"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"] # gộp mọi bản cập nhật action vào 1 PR
