@@ -9,7 +9,7 @@
 # Cách dùng: bash scripts/infra/telegram/ensure-topics.sh
 # Cần:
 #   DOPPLER_TOKEN      service token đọc config (giống CI Terraform)
-#   Trong Doppler:     TELEGRAM_BOT_TOKEN, TELEGRAM_HOOKDECK_CHAT_ID,
+#   Trong Doppler:     TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (nhóm chung của mọi luồng),
 #                      DOPPLER_API_TOKEN (quyền ghi vào chính project/config đó)
 #   Trên Telegram:     nhóm đã bật Topics, bot là admin có quyền "Manage topics"
 
@@ -22,7 +22,7 @@ get() { doppler secrets get "$1" --plain 2>/dev/null || true; }
 mask() { [ -n "${GITHUB_ACTIONS:-}" ] && [ -n "$1" ] && echo "::add-mask::$1"; return 0; }
 
 bot_token=$(get TELEGRAM_BOT_TOKEN)
-default_chat=$(get TELEGRAM_HOOKDECK_CHAT_ID)
+chat=$(get TELEGRAM_CHAT_ID)
 write_token=$(get DOPPLER_API_TOKEN)
 # Doppler tự có sẵn tên project/config của token đang dùng
 project=$(get DOPPLER_PROJECT)
@@ -30,30 +30,22 @@ config=$(get DOPPLER_CONFIG)
 mask "$bot_token"
 mask "$write_token"
 
-for v in bot_token default_chat write_token project config; do
+for v in bot_token chat write_token project config; do
   [ -n "${!v}" ] || { echo "Thiếu giá trị: $v (kiểm tra Doppler)" >&2; exit 1; }
 done
 
-# Chat của từng luồng: biến *_CHAT_ID riêng nếu có, không thì chat mặc định
-github_chat=$(get TELEGRAM_GITHUB_CHAT_ID)
-github_chat=${github_chat:-$default_chat}
-alert_chat=$(get TELEGRAM_GITHUB_ALERT_CHAT_ID)
-alert_chat=${alert_chat:-$github_chat}
-jira_chat=$(get TELEGRAM_JIRA_CHAT_ID)
-doppler_chat=$(get TELEGRAM_DOPPLER_CHAT_ID)
-
-# Tên topic | biến lưu thread id | chat | màu icon (giá trị Telegram cho phép)
+# Tên topic | biến lưu thread id | màu icon (giá trị Telegram cho phép)
 topics=(
-  "🚨 Alerts|TELEGRAM_GITHUB_ALERT_THREAD_ID|$alert_chat|16478047"
-  "🔐 Doppler|TELEGRAM_DOPPLER_THREAD_ID|${doppler_chat:-$default_chat}|13338331"
-  "🐙 GitHub|TELEGRAM_GITHUB_THREAD_ID|$github_chat|7322096"
-  "📋 Jira|TELEGRAM_JIRA_THREAD_ID|${jira_chat:-$default_chat}|9367192"
-  "🪝 Webhook|TELEGRAM_HOOKDECK_THREAD_ID|$default_chat|16766590"
+  "🚨 Alerts|TELEGRAM_GITHUB_ALERT_THREAD_ID|16478047"
+  "🔐 Doppler|TELEGRAM_DOPPLER_THREAD_ID|13338331"
+  "🐙 GitHub|TELEGRAM_GITHUB_THREAD_ID|7322096"
+  "📋 Jira|TELEGRAM_JIRA_THREAD_ID|9367192"
+  "🪝 Webhook|TELEGRAM_HOOKDECK_THREAD_ID|16766590"
 )
 
 created=0
 for t in "${topics[@]}"; do
-  IFS='|' read -r name var chat color <<<"$t"
+  IFS='|' read -r name var color <<<"$t"
 
   existing=$(get "$var")
   if [ -n "$existing" ]; then
