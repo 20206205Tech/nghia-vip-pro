@@ -69,10 +69,11 @@ resource "hookdeck_source" "telegram_doppler" {
 # 2. Transformation: tóm tắt thay đổi; không có thay đổi thật thì bỏ qua
 resource "hookdeck_transformation" "telegram_doppler" {
   name = "${var.telegram_doppler_name}-format"
-  env = jsonencode({
+  # Hookdeck không nhận giá trị rỗng trong env: bỏ các biến chưa cấu hình
+  env = jsonencode({ for k, v in {
     TELEGRAM_CHAT_ID   = var.TELEGRAM_DOPPLER_CHAT_ID != "" ? var.TELEGRAM_DOPPLER_CHAT_ID : var.TELEGRAM_HOOKDECK_CHAT_ID
     TELEGRAM_THREAD_ID = var.TELEGRAM_DOPPLER_THREAD_ID
-  })
+  } : k => v if v != "" })
   code = <<-EOT
     addHandler('transform', (request, context) => {
       const esc = (s) => String(s == null ? '' : s)

@@ -40,10 +40,11 @@ resource "hookdeck_source" "telegram_hookdeck" {
 #    chat_id truyền qua env, không ghép thẳng vào code
 resource "hookdeck_transformation" "telegram_hookdeck" {
   name = "${var.telegram_hookdeck_name}-format"
-  env = jsonencode({
+  # Hookdeck không nhận giá trị rỗng trong env: bỏ các biến chưa cấu hình
+  env = jsonencode({ for k, v in {
     TELEGRAM_CHAT_ID   = var.TELEGRAM_HOOKDECK_CHAT_ID
     TELEGRAM_THREAD_ID = var.TELEGRAM_HOOKDECK_THREAD_ID
-  })
+  } : k => v if v != "" })
   code = <<-EOT
     addHandler('transform', (request, context) => {
       // Escape ký tự HTML để Telegram (parse_mode HTML) không báo lỗi khi payload có < > &
