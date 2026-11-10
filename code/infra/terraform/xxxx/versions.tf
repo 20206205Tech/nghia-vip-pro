@@ -15,7 +15,7 @@ terraform {
   }
 }
 
-# Khai báo provider, token lấy từ variables (scripts/doppler-tf-env.sh xuất TF_VAR_*)
+# Khai báo provider, token lấy từ variables (scripts/terraform/doppler-tf-env.sh xuất TF_VAR_*)
 # provider "aiven" {
 #   api_token = var.XXXX_API_TOKEN
 # }

@@ -7,8 +7,8 @@
 #   - Đang Remote/Agent  -> chuyển sang Local
 #   - Đã Local           -> không làm gì
 #
-# Cách dùng: bash scripts/tfc-ensure-local.sh code/infra/terraform/<module>
-# Cần token: TF_TOKEN_app_terraform_io (scripts/doppler-tf-env.sh đã xuất) hoặc TF_API_TOKEN.
+# Cách dùng: bash scripts/terraform/tfc-ensure-local.sh code/infra/terraform/<module>
+# Cần token: TF_TOKEN_app_terraform_io (scripts/terraform/doppler-tf-env.sh đã xuất) hoặc TF_API_TOKEN.
 
 set -euo pipefail
 

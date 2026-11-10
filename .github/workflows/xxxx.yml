@@ -8,14 +8,14 @@ on:
       - "code/infra/terraform/xxxx/**"
       - ".github/workflows/xxxx.yml"
       - ".github/workflows/terraform.yml"
-      - "scripts/**"
+      - "scripts/terraform/**"
   pull_request:
     branches: [main]
     paths:
       - "code/infra/terraform/xxxx/**"
       - ".github/workflows/xxxx.yml"
       - ".github/workflows/terraform.yml"
-      - "scripts/**"
+      - "scripts/terraform/**"
 
 # Cần quyền ghi PR để in kết quả terraform plan
 permissions:
