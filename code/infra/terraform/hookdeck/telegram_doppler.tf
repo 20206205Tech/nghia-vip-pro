@@ -28,6 +28,12 @@ variable "telegram_doppler_projects" {
   default     = ["nghia-vip-pro-infra"]
 }
 
+variable "telegram_doppler_configs" {
+  type        = list(string)
+  description = "Các config Doppler kích hoạt webhook (để trống thì webhook không gửi cho config nào)"
+  default     = ["dev", "stg", "prod"]
+}
+
 variable "telegram_doppler_name" {
   type        = string
   description = "Tiền tố tên các resource của luồng Telegram Doppler"
@@ -152,6 +158,9 @@ resource "doppler_webhook" "telegram_doppler" {
   name    = var.telegram_doppler_name
   url     = hookdeck_source.telegram_doppler.url
   secret  = random_password.telegram_doppler_webhook.result
+
+  # Config nào thay đổi secret thì gửi thông báo
+  enabled_configs = var.telegram_doppler_configs
 }
 
 # ----- Output -----
