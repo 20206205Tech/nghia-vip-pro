@@ -6,6 +6,10 @@
 # Webhook trên Jira được Terraform tạo luôn với url = hookdeck_source.telegram_jira.url,
 # nên trong cùng một lần apply: tạo Source trước, rồi tạo/cập nhật webhook Jira.
 # Nếu URL của Source đổi, webhook Jira cũng tự được cập nhật, không cần chạy CI/CD riêng.
+#
+# Xác thực chữ ký: provider Jira không hỗ trợ trường secret, nên secret được tạo trên
+# giao diện Jira (webhook > Edit > Secret > Generate) rồi lưu vào Doppler JIRA_WEBHOOK_SECRET.
+# Khi có biến này, Hookdeck kiểm tra header X-Hub-Signature và từ chối request không hợp lệ.
 # =============================================================================
 
 # ----- Biến (secret lưu trong Doppler cùng tên) -----
@@ -24,6 +28,13 @@ variable "JIRA_API_TOKEN" {
   type        = string
   description = "API token của tài khoản Jira (id.atlassian.com > Security > API tokens)"
   sensitive   = true
+}
+
+variable "JIRA_WEBHOOK_SECRET" {
+  type        = string
+  description = "Secret của webhook Jira (tạo trên giao diện Jira). Bỏ trống thì Hookdeck chưa kiểm tra chữ ký"
+  sensitive   = true
+  default     = ""
 }
 
 variable "TELEGRAM_JIRA_CHAT_ID" {
@@ -173,14 +184,33 @@ resource "hookdeck_connection" "telegram_jira" {
   ]
 }
 
+# 5. Bật kiểm tra chữ ký Jira trên Source hiện có (không tạo lại Source, URL giữ nguyên).
+#    Chỉ tạo khi đã có JIRA_WEBHOOK_SECRET trong Doppler.
+resource "hookdeck_source_auth" "telegram_jira" {
+  count = nonsensitive(var.JIRA_WEBHOOK_SECRET != "") ? 1 : 0
+
+  source_id = hookdeck_source.telegram_jira.id
+  auth_type = "JIRA"
+  auth = jsonencode({
+    webhook_secret_key = var.JIRA_WEBHOOK_SECRET
+  })
+}
+
 # ----- Resource trên Jira -----
 
-# 5. Webhook Jira trỏ về Source của Hookdeck, URL luôn đồng bộ với output
+# 6. Webhook Jira trỏ về Source của Hookdeck, URL luôn đồng bộ với output
 resource "jira_webhook" "telegram_jira" {
   name   = var.telegram_jira_name
   url    = hookdeck_source.telegram_jira.url
   events = var.telegram_jira_events
   jql    = var.telegram_jira_jql == "" ? null : var.telegram_jira_jql
+
+  lifecycle {
+    # Provider không biết trường secret: mỗi lần cập nhật có thể xóa secret đã đặt trên Jira.
+    # Bỏ qua các trường hay lệch (Jira trả events theo thứ tự khác) để Terraform không gửi PUT.
+    # Muốn đổi events/JQL: sửa trên giao diện Jira, hoặc tạm bỏ dòng tương ứng ở đây.
+    ignore_changes = [name, events, jql, exclude_body]
+  }
 }
 
 # ----- Output -----
