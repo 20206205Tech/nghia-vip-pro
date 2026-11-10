@@ -1,0 +1,35 @@
+# Chạy tay: tạo các topic Telegram còn thiếu, lưu thread id vào Doppler,
+# rồi chạy Terraform module hookdeck để các luồng dùng topic mới.
+name: telegram-topics
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  topics:
+    name: Ensure Telegram topics
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v4
+
+      - name: Create missing topics
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: bash scripts/infra/telegram/ensure-topics.sh
+
+  # Đưa thread id mới vào các transformation trên Hookdeck (apply khi chạy trên main)
+  hookdeck:
+    needs: topics
+    uses: ./.github/workflows/terraform.yml
+    with:
+      module: hookdeck
+    secrets:
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
