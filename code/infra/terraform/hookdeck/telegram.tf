@@ -2,7 +2,7 @@
 # Phần dùng chung cho mọi luồng Telegram (telegram_*.tf)
 #
 # - Một bot gửi được vào nhiều chat, nên chỉ cần một bot token và một destination.
-#   Mỗi luồng chọn chat qua TELEGRAM_<LUONG>_CHAT_ID trong transformation.
+#   Mọi luồng gửi vào một nhóm (TELEGRAM_CHAT_ID), mỗi luồng một topic (TELEGRAM_<LUONG>_THREAD_ID).
 # - Retry rule dùng chung: tự gửi lại khi Telegram lỗi tạm thời.
 # =============================================================================
 
@@ -10,6 +10,11 @@ variable "TELEGRAM_BOT_TOKEN" {
   type        = string
   description = "Token bot Telegram (BotFather) dùng chung cho mọi luồng Telegram"
   sensitive   = true
+}
+
+variable "TELEGRAM_CHAT_ID" {
+  type        = string
+  description = "ID nhóm Telegram (supergroup bật Topics, dạng -100...) nhận thông báo của mọi luồng"
 }
 
 # Destination trỏ thẳng đến endpoint sendMessage của Telegram
