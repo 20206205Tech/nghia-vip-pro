@@ -16,6 +16,21 @@ terraform {
       source  = "fourplusone/jira"
       version = "~> 0.1.20"
     }
+    # Tạo webhook GitHub (organization) trỏ về Hookdeck (xem telegram_github.tf)
+    github = {
+      source  = "integrations/github"
+      version = "~> 6.13"
+    }
+    # Tạo webhook Doppler trỏ về Hookdeck (xem telegram_doppler.tf)
+    doppler = {
+      source  = "DopplerHQ/doppler"
+      version = "~> 1.23"
+    }
+    # Sinh secret ký webhook dùng chung giữa Hookdeck và GitHub/Doppler
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.9"
+    }
   }
 }
 
