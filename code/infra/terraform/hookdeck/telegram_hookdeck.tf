@@ -14,6 +14,12 @@ variable "TELEGRAM_HOOKDECK_CHAT_ID" {
   description = "Chat ID mặc định: nhận thông báo của luồng Telegram Hookdeck và của các luồng không khai báo chat riêng"
 }
 
+variable "TELEGRAM_HOOKDECK_THREAD_ID" {
+  type        = string
+  description = "Topic ID (message_thread_id) trong supergroup bật Topics. Bỏ trống thì gửi vào chat chính"
+  default     = ""
+}
+
 variable "telegram_hookdeck_name" {
   type        = string
   description = "Tiền tố tên các resource của luồng Telegram Hookdeck trên Hookdeck"
@@ -35,7 +41,8 @@ resource "hookdeck_source" "telegram_hookdeck" {
 resource "hookdeck_transformation" "telegram_hookdeck" {
   name = "${var.telegram_hookdeck_name}-format"
   env = jsonencode({
-    TELEGRAM_CHAT_ID = var.TELEGRAM_HOOKDECK_CHAT_ID
+    TELEGRAM_CHAT_ID   = var.TELEGRAM_HOOKDECK_CHAT_ID
+    TELEGRAM_THREAD_ID = var.TELEGRAM_HOOKDECK_THREAD_ID
   })
   code = <<-EOT
     addHandler('transform', (request, context) => {
@@ -64,6 +71,10 @@ resource "hookdeck_transformation" "telegram_hookdeck" {
         parse_mode: 'HTML'
       };
 
+      // Gửi vào topic (supergroup bật Topics) nếu có TELEGRAM_THREAD_ID
+      if (request.body && request.body.chat_id && process.env.TELEGRAM_THREAD_ID) {
+        request.body.message_thread_id = Number(process.env.TELEGRAM_THREAD_ID);
+      }
       request.headers = request.headers || {};
       request.headers['content-type'] = 'application/json';
 

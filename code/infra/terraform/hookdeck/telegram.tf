@@ -39,4 +39,14 @@ locals {
       response_status_codes = ["429", "500-599"]
     }
   }
+
+  # Đặt SAU transform_rule: chỉ chuyển tiếp khi transformation đã tạo được tin nhắn
+  # (transformation trả body rỗng cho sự kiện không cần thông báo)
+  telegram_has_text_filter = {
+    filter_rule = {
+      body = {
+        json = jsonencode({ text = { "$exist" = true } })
+      }
+    }
+  }
 }
