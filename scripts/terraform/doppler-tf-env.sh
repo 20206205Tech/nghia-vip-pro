@@ -3,9 +3,9 @@
 # và xuất ra dạng TF_VAR_X. Secret chỉ nằm trong Doppler, không đồng bộ sang Terraform Cloud.
 #
 # Cách dùng:
-#   GitHub Actions : bash scripts/doppler-tf-env.sh code/infra/terraform/<module>
+#   GitHub Actions : bash scripts/terraform/doppler-tf-env.sh code/infra/terraform/<module>
 #                    (tự ghi vào $GITHUB_ENV và che giá trị trong log)
-#   Máy local      : eval "$(bash scripts/doppler-tf-env.sh code/infra/terraform/<module>)"
+#   Máy local      : eval "$(bash scripts/terraform/doppler-tf-env.sh code/infra/terraform/<module>)"
 #
 # Yêu cầu: Doppler CLI (đã login hoặc có DOPPLER_TOKEN).
 # Ngoài biến trong *.tf, script còn lấy TF_API_TOKEN để đăng nhập Terraform Cloud.
@@ -15,6 +15,13 @@ set -euo pipefail
 dir="${1:?Thiếu tham số: thư mục module terraform}"
 
 command -v doppler >/dev/null || { echo "Thiếu Doppler CLI" >&2; exit 1; }
+
+# Kiểm tra kết nối Doppler trước, tránh lỗi im lặng khi thiếu/sai DOPPLER_TOKEN
+if ! err=$(doppler secrets --only-names 2>&1 >/dev/null); then
+  echo "Không kết nối được Doppler (kiểm tra secret DOPPLER_TOKEN trên GitHub hoặc 'doppler setup'):" >&2
+  echo "$err" >&2
+  exit 1
+fi
 compgen -G "$dir/*.tf" >/dev/null || { echo "Không có file .tf trong $dir" >&2; exit 1; }
 
 # Tên các biến được khai báo trong module
