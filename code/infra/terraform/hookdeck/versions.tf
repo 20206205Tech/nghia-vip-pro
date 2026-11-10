@@ -11,6 +11,11 @@ terraform {
       source  = "hookdeck/hookdeck"
       version = "~> 2.4"
     }
+    # Tạo webhook trên Jira trỏ về URL của Hookdeck (xem telegram_jira.tf)
+    jira = {
+      source  = "fourplusone/jira"
+      version = "~> 0.1.20"
+    }
   }
 }
 
