@@ -119,19 +119,33 @@ resource "hookdeck_transformation" "telegram_jira" {
         const link = base ? '<a href="' + esc(base + '/browse/' + issue.key) + '">' + key + '</a>' : key;
         lines.push(link + ': ' + esc(f.summary));
       }
-      if (f.issuetype && f.issuetype.name) lines.push('Loại: ' + esc(f.issuetype.name));
-      if (f.status && f.status.name) lines.push('Trạng thái: ' + esc(f.status.name));
-      if (f.priority && f.priority.name) lines.push('Độ ưu tiên: ' + esc(f.priority.name));
-      lines.push('Người xử lý: ' + esc(f.assignee && f.assignee.displayName ? f.assignee.displayName : 'Chưa giao'));
+      const typeIcons = { bug: '🐞', task: '✅', story: '📖', epic: '⚡', 'sub-task': '🔹', subtask: '🔹' };
+      const prioIcons = { highest: '🔴', high: '🟠', medium: '🟡', low: '🟢', lowest: '🔵' };
+      const statusIcon = (n) => {
+        const s = String(n).toLowerCase();
+        if (/done|resolved|closed|hoàn thành|xong/.test(s)) return '✅';
+        if (/progress|doing|đang/.test(s)) return '🔄';
+        if (/review|test/.test(s)) return '🔍';
+        if (/block/.test(s)) return '⛔';
+        return '📋';
+      };
+      if (f.issuetype && f.issuetype.name) {
+        lines.push((typeIcons[String(f.issuetype.name).toLowerCase()] || '🏷️') + ' Loại: ' + esc(f.issuetype.name));
+      }
+      if (f.status && f.status.name) lines.push(statusIcon(f.status.name) + ' Trạng thái: ' + esc(f.status.name));
+      if (f.priority && f.priority.name) {
+        lines.push((prioIcons[String(f.priority.name).toLowerCase()] || '🚩') + ' Độ ưu tiên: ' + esc(f.priority.name));
+      }
+      lines.push('👤 Người xử lý: ' + esc(f.assignee && f.assignee.displayName ? f.assignee.displayName : 'Chưa giao'));
 
       const actor = (b.user && b.user.displayName) ||
         (b.comment && b.comment.author && b.comment.author.displayName) || '';
-      if (actor) lines.push('Bởi: ' + esc(actor));
+      if (actor) lines.push('🙋 Bởi: ' + esc(actor));
 
       // Các trường thay đổi (issue_updated), tối đa 5 dòng
       const items = (b.changelog && b.changelog.items) || [];
       items.slice(0, 5).forEach((it) => {
-        lines.push('• ' + esc(it.field) + ': ' + esc(cut(String(it.fromString || '∅'), 100)) +
+        lines.push('🔁 ' + esc(it.field) + ': ' + esc(cut(String(it.fromString || '∅'), 100)) +
           ' → ' + esc(cut(String(it.toString || '∅'), 100)));
       });
 
