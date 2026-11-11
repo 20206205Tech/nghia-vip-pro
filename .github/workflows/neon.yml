@@ -1,0 +1,31 @@
+name: neon
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "code/infra/terraform/neon/**"
+      - ".github/workflows/neon.yml"
+      - ".github/workflows/terraform.yml"
+      - "scripts/infra/terraform/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "code/infra/terraform/neon/**"
+      - ".github/workflows/neon.yml"
+      - ".github/workflows/terraform.yml"
+      - "scripts/infra/terraform/**"
+
+# Cần quyền ghi PR để in kết quả terraform plan
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  neon:
+    uses: ./.github/workflows/terraform.yml
+    with:
+      module: neon
+    secrets:
+      DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
