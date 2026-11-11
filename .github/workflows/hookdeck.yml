@@ -10,7 +10,7 @@ on:
       - ".github/workflows/terraform.yml"
       - "scripts/infra/terraform/**"
   pull_request:
-    branches: [main]
+    branches: [dev, stg, main]
     paths:
       - "code/infra/terraform/hookdeck/**"
       - ".github/workflows/hookdeck.yml"
