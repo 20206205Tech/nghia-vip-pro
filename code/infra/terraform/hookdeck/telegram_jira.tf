@@ -110,7 +110,8 @@ resource "hookdeck_transformation" "telegram_jira" {
         'comment_created': '💬 Bình luận mới',
         'comment_updated': '💬 Bình luận được sửa'
       };
-      const lines = ['<b>' + esc(titles[event] || '🔔 ' + event) + '</b>'];
+      const sep = '━━━━━━━━━━━━━━━━━━';
+      const lines = ['<b>' + esc(titles[event] || '🔔 ' + event) + '</b>', sep];
 
       if (issue.key) {
         const base = String(issue.self || '').split('/rest/')[0];
