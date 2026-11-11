@@ -1,14 +1,11 @@
 # =============================================================================
-# Module con: tạo các project Supabase trong MỘT organization (một tài khoản)
-# và cấu hình Auth (Google OAuth, SMTP, mẫu email) cho từng project.
-# Được gọi từ ../../main.tf, mỗi tài khoản Supabase một lần.
+# Module con: tạo MỘT project Supabase và cấu hình Auth (Google OAuth, SMTP, mẫu email).
+# Được gọi từ ../../main.tf, mỗi môi trường một lần với provider riêng.
 # =============================================================================
 
 resource "supabase_project" "this" {
-  for_each = var.projects
-
   organization_id   = var.organization_id
-  name              = each.value.name
+  name              = var.name
   database_password = var.database_password
   region            = var.region
 
@@ -18,30 +15,27 @@ resource "supabase_project" "this" {
 }
 
 data "supabase_apikeys" "this" {
-  for_each    = supabase_project.this
-  project_ref = each.value.id
+  project_ref = supabase_project.this.id
 }
 
 resource "supabase_settings" "this" {
-  for_each = supabase_project.this
-
-  project_ref = each.value.id
+  project_ref = supabase_project.this.id
 
   auth = jsonencode({
     # # Mặc định là 1 giờ, cấu hình 12 giờ = 43200 giây
     # jwt_exp = 43200
 
-    # Mỗi môi trường dùng OAuth client của GCP project cùng tên (nghia-vip-<env>)
+    # OAuth client của GCP project cùng tên (nghia-vip-<env>)
     external_google_enabled   = true
-    external_google_client_id = var.google_oauth[each.key].client_id
-    external_google_secret    = var.google_oauth[each.key].client_secret
+    external_google_client_id = var.google_client_id
+    external_google_secret    = var.google_client_secret
 
-    site_url = var.projects[each.key].site_url
+    site_url = var.site_url
 
     # Dùng join để biến list thành string cách nhau bởi dấu phẩy
     uri_allow_list = join(",", distinct(concat(
-      [var.projects[each.key].site_url],
-      var.projects[each.key].allowed_uris
+      [var.site_url],
+      var.allowed_uris
     )))
 
     smtp_host        = var.smtp.host

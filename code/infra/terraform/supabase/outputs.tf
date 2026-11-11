@@ -1,5 +1,10 @@
 locals {
-  project_refs = merge(module.account_a.project_refs, module.account_b.project_refs)
+  project_refs = {
+    dev  = module.dev.project_ref
+    stg  = module.stg.project_ref
+    prod = module.prod.project_ref
+    test = module.test.project_ref
+  }
 }
 
 output "project_refs" {
@@ -14,6 +19,11 @@ output "api_urls" {
 
 output "anon_keys" {
   description = "Anon key (public) của các project Supabase theo môi trường"
-  value       = merge(module.account_a.anon_keys, module.account_b.anon_keys)
-  sensitive   = true
+  value = {
+    dev  = module.dev.anon_key
+    stg  = module.stg.anon_key
+    prod = module.prod.anon_key
+    test = module.test.anon_key
+  }
+  sensitive = true
 }

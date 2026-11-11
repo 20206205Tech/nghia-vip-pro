@@ -1,6 +1,11 @@
+variable "name" {
+  type        = string
+  description = "Tên project Supabase"
+}
+
 variable "organization_id" {
   type        = string
-  description = "ID organization Supabase của tài khoản này"
+  description = "ID organization Supabase chứa project"
 }
 
 variable "region" {
@@ -9,28 +14,32 @@ variable "region" {
   default     = "ap-southeast-1"
 }
 
-# Không chứa secret để dùng được làm for_each (Terraform không cho for_each trên giá trị sensitive)
-variable "projects" {
-  type = map(object({
-    name         = string
-    site_url     = string
-    allowed_uris = list(string)
-  }))
-  description = "Các project cần tạo, key là tên môi trường (dev, stg, prod, test)"
-}
-
-variable "google_oauth" {
-  type = map(object({
-    client_id     = string
-    client_secret = string
-  }))
-  description = "Google OAuth client theo môi trường, cùng key với var.projects"
-  sensitive   = true
-}
-
 variable "database_password" {
   type        = string
   description = "Mật khẩu database"
+  sensitive   = true
+}
+
+variable "site_url" {
+  type        = string
+  description = "URL chính Supabase Auth redirect về sau khi đăng nhập"
+}
+
+variable "allowed_uris" {
+  type        = list(string)
+  description = "Các URL redirect được phép thêm ngoài site_url"
+  default     = []
+}
+
+variable "google_client_id" {
+  type        = string
+  description = "Google OAuth Client ID"
+  sensitive   = true
+}
+
+variable "google_client_secret" {
+  type        = string
+  description = "Google OAuth Client Secret"
   sensitive   = true
 }
 

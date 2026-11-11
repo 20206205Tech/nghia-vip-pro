@@ -14,14 +14,24 @@ terraform {
   }
 }
 
-# Mỗi tài khoản Supabase một provider, token lấy từ variables
+# Mỗi môi trường một provider, token lấy từ variables
 # (scripts/infra/terraform/doppler-tf-env.sh xuất TF_VAR_*)
 provider "supabase" {
-  alias        = "a"
-  access_token = var.SUPABASE_ACCESS_TOKEN_A
+  alias        = "dev"
+  access_token = var.SUPABASE_ACCESS_TOKEN_DEV
 }
 
 provider "supabase" {
-  alias        = "b"
-  access_token = var.SUPABASE_ACCESS_TOKEN_B
+  alias        = "stg"
+  access_token = var.SUPABASE_ACCESS_TOKEN_STG
+}
+
+provider "supabase" {
+  alias        = "prod"
+  access_token = var.SUPABASE_ACCESS_TOKEN_PROD
+}
+
+provider "supabase" {
+  alias        = "test"
+  access_token = var.SUPABASE_ACCESS_TOKEN_TEST
 }

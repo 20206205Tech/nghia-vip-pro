@@ -1,76 +1,104 @@
 # =============================================================================
-# Supabase: 4 môi trường chia trên 2 tài khoản (mỗi tài khoản Free được 2 project)
+# Supabase: 4 môi trường, mỗi môi trường một bộ biến riêng trong Doppler
+#   SUPABASE_ACCESS_TOKEN_<ENV>, SUPABASE_ORGANIZATION_ID_<ENV>, SUPABASE_DB_PASSWORD_<ENV>,
+#   GOOGLE_CLIENT_ID_<ENV>, GOOGLE_CLIENT_SECRET_<ENV>, SMTP_USERNAME_<ENV>, SMTP_PASSWORD_<ENV>
 #
-#   Tài khoản A: prod, stg   (provider supabase.a)
-#   Tài khoản B: dev,  test  (provider supabase.b)
-#
-# Tên project trùng tên GCP project (nghia-vip-<env>), Google OAuth client cũng
-# lấy từ GCP project cùng tên. Muốn đổi môi trường sang tài khoản khác: sửa `account`.
+# Hai môi trường có thể dùng chung một tài khoản Supabase (cùng token/org), chỉ cần
+# đặt giá trị giống nhau trong Doppler. Tên project trùng GCP project: nghia-vip-<env>.
 # =============================================================================
 
 locals {
   default_callback = "https://20206205tech.github.io/auth-callback"
   local_callback   = "http://localhost:3000/auth/callback"
 
-  environments = {
-    prod = { account = "a", site_url = "https://20206205.tech/auth/callback" }
-    stg  = { account = "a", site_url = local.local_callback } # Chưa có domain, tạm dùng localhost
-    dev  = { account = "b", site_url = local.local_callback }
-    test = { account = "b", site_url = local.local_callback } # Dùng cho CI (app chạy localhost trên runner)
-  }
-
-  projects = {
-    for env, cfg in local.environments : env => {
-      account      = cfg.account
-      name         = "nghia-vip-${env}"
-      site_url     = cfg.site_url
-      allowed_uris = [local.default_callback]
-    }
-  }
-
-  google_oauth = {
-    dev  = { client_id = var.GOOGLE_CLIENT_ID_DEV, client_secret = var.GOOGLE_CLIENT_SECRET_DEV }
-    stg  = { client_id = var.GOOGLE_CLIENT_ID_STG, client_secret = var.GOOGLE_CLIENT_SECRET_STG }
-    prod = { client_id = var.GOOGLE_CLIENT_ID_PROD, client_secret = var.GOOGLE_CLIENT_SECRET_PROD }
-    test = { client_id = var.GOOGLE_CLIENT_ID_TEST, client_secret = var.GOOGLE_CLIENT_SECRET_TEST }
-  }
-
-  smtp = {
+  smtp_common = {
     host        = var.SMTP_HOST
     port        = var.SMTP_PORT
-    username    = var.SMTP_USERNAME
-    password    = var.SMTP_PASSWORD
     admin_email = var.SMTP_ADMIN_EMAIL
     sender_name = var.SMTP_SENDER_NAME
   }
 }
 
-module "account_a" {
+# dev: Tài khoản B, dùng localhost
+module "dev" {
   source    = "./modules/project"
-  providers = { supabase = supabase.a }
+  providers = { supabase = supabase.dev }
 
-  organization_id   = var.SUPABASE_ORGANIZATION_ID_A
-  database_password = var.SUPABASE_DB_PASSWORD
-  smtp              = local.smtp
+  name              = "nghia-vip-dev"
+  organization_id   = var.SUPABASE_ORGANIZATION_ID_DEV
+  database_password = var.SUPABASE_DB_PASSWORD_DEV
 
-  projects = {
-    for env, p in local.projects : env => { name = p.name, site_url = p.site_url, allowed_uris = p.allowed_uris }
-    if p.account == "a"
-  }
-  google_oauth = { for env, p in local.projects : env => local.google_oauth[env] if p.account == "a" }
+  site_url     = local.local_callback
+  allowed_uris = [local.default_callback]
+
+  google_client_id     = var.GOOGLE_CLIENT_ID_DEV
+  google_client_secret = var.GOOGLE_CLIENT_SECRET_DEV
+
+  smtp = merge(local.smtp_common, {
+    username = var.SMTP_USERNAME_DEV
+    password = var.SMTP_PASSWORD_DEV
+  })
 }
 
-module "account_b" {
+# stg: Tài khoản A, chưa có domain nên tạm dùng localhost
+module "stg" {
   source    = "./modules/project"
-  providers = { supabase = supabase.b }
+  providers = { supabase = supabase.stg }
 
-  organization_id   = var.SUPABASE_ORGANIZATION_ID_B
-  database_password = var.SUPABASE_DB_PASSWORD
-  smtp              = local.smtp
+  name              = "nghia-vip-stg"
+  organization_id   = var.SUPABASE_ORGANIZATION_ID_STG
+  database_password = var.SUPABASE_DB_PASSWORD_STG
 
-  projects = {
-    for env, p in local.projects : env => { name = p.name, site_url = p.site_url, allowed_uris = p.allowed_uris }
-    if p.account == "b"
-  }
-  google_oauth = { for env, p in local.projects : env => local.google_oauth[env] if p.account == "b" }
+  site_url     = local.local_callback
+  allowed_uris = [local.default_callback]
+
+  google_client_id     = var.GOOGLE_CLIENT_ID_STG
+  google_client_secret = var.GOOGLE_CLIENT_SECRET_STG
+
+  smtp = merge(local.smtp_common, {
+    username = var.SMTP_USERNAME_STG
+    password = var.SMTP_PASSWORD_STG
+  })
+}
+
+# prod: Tài khoản A
+module "prod" {
+  source    = "./modules/project"
+  providers = { supabase = supabase.prod }
+
+  name              = "nghia-vip-prod"
+  organization_id   = var.SUPABASE_ORGANIZATION_ID_PROD
+  database_password = var.SUPABASE_DB_PASSWORD_PROD
+
+  site_url     = "https://20206205.tech/auth/callback"
+  allowed_uris = [local.default_callback]
+
+  google_client_id     = var.GOOGLE_CLIENT_ID_PROD
+  google_client_secret = var.GOOGLE_CLIENT_SECRET_PROD
+
+  smtp = merge(local.smtp_common, {
+    username = var.SMTP_USERNAME_PROD
+    password = var.SMTP_PASSWORD_PROD
+  })
+}
+
+# test: Tài khoản B, dùng cho CI (app chạy localhost trên runner)
+module "test" {
+  source    = "./modules/project"
+  providers = { supabase = supabase.test }
+
+  name              = "nghia-vip-test"
+  organization_id   = var.SUPABASE_ORGANIZATION_ID_TEST
+  database_password = var.SUPABASE_DB_PASSWORD_TEST
+
+  site_url     = local.local_callback
+  allowed_uris = [local.default_callback]
+
+  google_client_id     = var.GOOGLE_CLIENT_ID_TEST
+  google_client_secret = var.GOOGLE_CLIENT_SECRET_TEST
+
+  smtp = merge(local.smtp_common, {
+    username = var.SMTP_USERNAME_TEST
+    password = var.SMTP_PASSWORD_TEST
+  })
 }

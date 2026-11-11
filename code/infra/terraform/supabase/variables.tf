@@ -2,43 +2,24 @@
 # scripts/infra/terraform/doppler-tf-env.sh chỉ lấy những biến khai báo ở đây
 # Biến không quan trọng: điền luôn default
 
-# ----- Tài khoản Supabase A (prod, stg) -----
+# ----- dev (nghia-vip-dev) -----
 
-variable "SUPABASE_ACCESS_TOKEN_A" {
+variable "SUPABASE_ACCESS_TOKEN_DEV" {
   type        = string
-  description = "Personal Access Token của tài khoản Supabase A"
+  description = "Personal Access Token của tài khoản Supabase chứa project dev"
   sensitive   = true
 }
 
-variable "SUPABASE_ORGANIZATION_ID_A" {
+variable "SUPABASE_ORGANIZATION_ID_DEV" {
   type        = string
-  description = "ID organization của tài khoản Supabase A"
-  default     = "lzpbqmedjxywckgdnoqx"
+  description = "ID organization Supabase chứa project dev"
 }
 
-# ----- Tài khoản Supabase B (dev, test) -----
-
-variable "SUPABASE_ACCESS_TOKEN_B" {
+variable "SUPABASE_DB_PASSWORD_DEV" {
   type        = string
-  description = "Personal Access Token của tài khoản Supabase B"
+  description = "Mật khẩu database của project dev"
   sensitive   = true
 }
-
-# Chưa biết trước nên không đặt default: lưu trong Doppler (hoặc điền default khi đã có)
-variable "SUPABASE_ORGANIZATION_ID_B" {
-  type        = string
-  description = "ID organization của tài khoản Supabase B"
-}
-
-# ----- Chung -----
-
-variable "SUPABASE_DB_PASSWORD" {
-  type        = string
-  description = "Mật khẩu database cho mọi project"
-  sensitive   = true
-}
-
-# ----- Google OAuth: mỗi môi trường một client trong GCP project nghia-vip-<env> -----
 
 variable "GOOGLE_CLIENT_ID_DEV" {
   type        = string
@@ -49,6 +30,37 @@ variable "GOOGLE_CLIENT_ID_DEV" {
 variable "GOOGLE_CLIENT_SECRET_DEV" {
   type        = string
   description = "Google OAuth Client Secret (GCP nghia-vip-dev)"
+  sensitive   = true
+}
+
+variable "SMTP_USERNAME_DEV" {
+  type        = string
+  description = "Tên đăng nhập SMTP gửi email Auth của dev"
+  sensitive   = true
+}
+
+variable "SMTP_PASSWORD_DEV" {
+  type        = string
+  description = "Mật khẩu SMTP (App Password) của dev"
+  sensitive   = true
+}
+
+# ----- stg (nghia-vip-stg) -----
+
+variable "SUPABASE_ACCESS_TOKEN_STG" {
+  type        = string
+  description = "Personal Access Token của tài khoản Supabase chứa project stg"
+  sensitive   = true
+}
+
+variable "SUPABASE_ORGANIZATION_ID_STG" {
+  type        = string
+  description = "ID organization Supabase chứa project stg"
+}
+
+variable "SUPABASE_DB_PASSWORD_STG" {
+  type        = string
+  description = "Mật khẩu database của project stg"
   sensitive   = true
 }
 
@@ -64,6 +76,37 @@ variable "GOOGLE_CLIENT_SECRET_STG" {
   sensitive   = true
 }
 
+variable "SMTP_USERNAME_STG" {
+  type        = string
+  description = "Tên đăng nhập SMTP gửi email Auth của stg"
+  sensitive   = true
+}
+
+variable "SMTP_PASSWORD_STG" {
+  type        = string
+  description = "Mật khẩu SMTP (App Password) của stg"
+  sensitive   = true
+}
+
+# ----- prod (nghia-vip-prod) -----
+
+variable "SUPABASE_ACCESS_TOKEN_PROD" {
+  type        = string
+  description = "Personal Access Token của tài khoản Supabase chứa project prod"
+  sensitive   = true
+}
+
+variable "SUPABASE_ORGANIZATION_ID_PROD" {
+  type        = string
+  description = "ID organization Supabase chứa project prod"
+}
+
+variable "SUPABASE_DB_PASSWORD_PROD" {
+  type        = string
+  description = "Mật khẩu database của project prod"
+  sensitive   = true
+}
+
 variable "GOOGLE_CLIENT_ID_PROD" {
   type        = string
   description = "Google OAuth Client ID (GCP nghia-vip-prod)"
@@ -73,6 +116,37 @@ variable "GOOGLE_CLIENT_ID_PROD" {
 variable "GOOGLE_CLIENT_SECRET_PROD" {
   type        = string
   description = "Google OAuth Client Secret (GCP nghia-vip-prod)"
+  sensitive   = true
+}
+
+variable "SMTP_USERNAME_PROD" {
+  type        = string
+  description = "Tên đăng nhập SMTP gửi email Auth của prod"
+  sensitive   = true
+}
+
+variable "SMTP_PASSWORD_PROD" {
+  type        = string
+  description = "Mật khẩu SMTP (App Password) của prod"
+  sensitive   = true
+}
+
+# ----- test (nghia-vip-test) -----
+
+variable "SUPABASE_ACCESS_TOKEN_TEST" {
+  type        = string
+  description = "Personal Access Token của tài khoản Supabase chứa project test"
+  sensitive   = true
+}
+
+variable "SUPABASE_ORGANIZATION_ID_TEST" {
+  type        = string
+  description = "ID organization Supabase chứa project test"
+}
+
+variable "SUPABASE_DB_PASSWORD_TEST" {
+  type        = string
+  description = "Mật khẩu database của project test"
   sensitive   = true
 }
 
@@ -88,7 +162,19 @@ variable "GOOGLE_CLIENT_SECRET_TEST" {
   sensitive   = true
 }
 
-# ----- SMTP -----
+variable "SMTP_USERNAME_TEST" {
+  type        = string
+  description = "Tên đăng nhập SMTP gửi email Auth của test"
+  sensitive   = true
+}
+
+variable "SMTP_PASSWORD_TEST" {
+  type        = string
+  description = "Mật khẩu SMTP (App Password) của test"
+  sensitive   = true
+}
+
+# ----- SMTP dùng chung -----
 
 variable "SMTP_HOST" {
   type        = string
@@ -100,18 +186,6 @@ variable "SMTP_PORT" {
   type        = string
   description = "Cổng SMTP"
   default     = "587"
-}
-
-variable "SMTP_USERNAME" {
-  type        = string
-  description = "Tên đăng nhập SMTP"
-  sensitive   = true
-}
-
-variable "SMTP_PASSWORD" {
-  type        = string
-  description = "Mật khẩu SMTP"
-  sensitive   = true
 }
 
 variable "SMTP_ADMIN_EMAIL" {

@@ -1,8 +1,8 @@
-output "project_refs" {
-  value = { for env, p in supabase_project.this : env => p.id }
+output "project_ref" {
+  value = supabase_project.this.id
 }
 
-output "anon_keys" {
-  value     = { for env, k in data.supabase_apikeys.this : env => k.anon_key }
+output "anon_key" {
+  value     = data.supabase_apikeys.this.anon_key
   sensitive = true
 }
