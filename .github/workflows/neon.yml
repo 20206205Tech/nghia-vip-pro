@@ -17,10 +17,8 @@ on:
       - ".github/workflows/terraform.yml"
       - "scripts/infra/terraform/**"
 
-# Cần quyền ghi PR để in kết quả terraform plan
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   neon:
