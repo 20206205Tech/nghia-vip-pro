@@ -1,4 +1,4 @@
-name: neon
+name: terraform-neon
 
 on:
   workflow_dispatch:
@@ -6,14 +6,14 @@ on:
     branches: [main]
     paths:
       - "code/infra/terraform/neon/**"
-      - ".github/workflows/neon.yml"
+      - ".github/workflows/terraform-neon.yml"
       - ".github/workflows/terraform.yml"
       - "scripts/infra/terraform/**"
   pull_request:
     branches: [dev, stg, main]
     paths:
       - "code/infra/terraform/neon/**"
-      - ".github/workflows/neon.yml"
+      - ".github/workflows/terraform-neon.yml"
       - ".github/workflows/terraform.yml"
       - "scripts/infra/terraform/**"
 
