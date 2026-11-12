@@ -3,8 +3,11 @@
 #   SUPABASE_ACCESS_TOKEN_<ENV>, SUPABASE_ORGANIZATION_ID_<ENV>, SUPABASE_DB_PASSWORD_<ENV>,
 #   GOOGLE_CLIENT_ID_<ENV>, GOOGLE_CLIENT_SECRET_<ENV>, SMTP_USERNAME_<ENV>, SMTP_PASSWORD_<ENV>
 #
-# Hai môi trường có thể dùng chung một tài khoản Supabase (cùng token/org), chỉ cần
-# đặt giá trị giống nhau trong Doppler. Tên project trùng GCP project: nghia-vip-<env>.
+# Phân bổ tài khoản (Free: mỗi tài khoản tối đa 2 project đang chạy):
+#   Tài khoản B: dev, stg
+#   Tài khoản A: prod, test
+# Hai môi trường cùng tài khoản thì đặt token/org giống nhau trong Doppler.
+# Tên project trùng GCP project: nghia-vip-<env>.
 # =============================================================================
 
 locals {
@@ -19,7 +22,8 @@ locals {
   }
 }
 
-# dev: Tài khoản B, dùng localhost
+# ===== DEV (tài khoản B) =====
+# Dùng localhost
 module "dev" {
   source    = "./modules/project"
   providers = { supabase = supabase.dev }
@@ -40,7 +44,8 @@ module "dev" {
   })
 }
 
-# stg: Tài khoản A, chưa có domain nên tạm dùng localhost
+# ===== STG (tài khoản B) =====
+# Chưa có domain nên tạm dùng localhost
 module "stg" {
   source    = "./modules/project"
   providers = { supabase = supabase.stg }
@@ -61,7 +66,7 @@ module "stg" {
   })
 }
 
-# prod: Tài khoản A
+# ===== PROD (tài khoản A) =====
 module "prod" {
   source    = "./modules/project"
   providers = { supabase = supabase.prod }
@@ -82,7 +87,8 @@ module "prod" {
   })
 }
 
-# test: Tài khoản B, dùng cho CI (app chạy localhost trên runner)
+# ===== TEST (tài khoản A) =====
+# Dùng cho CI (app chạy localhost trên runner)
 module "test" {
   source    = "./modules/project"
   providers = { supabase = supabase.test }

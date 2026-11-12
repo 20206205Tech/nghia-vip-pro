@@ -2,7 +2,7 @@
 # scripts/infra/terraform/doppler-tf-env.sh chỉ lấy những biến khai báo ở đây
 # Biến không quan trọng: điền luôn default
 
-# ----- dev (nghia-vip-dev) -----
+# ===== DEV (tài khoản B) — nghia-vip-dev =====
 
 variable "SUPABASE_ACCESS_TOKEN_DEV" {
   type        = string
@@ -45,7 +45,7 @@ variable "SMTP_PASSWORD_DEV" {
   sensitive   = true
 }
 
-# ----- stg (nghia-vip-stg) -----
+# ===== STG (tài khoản B) — nghia-vip-stg =====
 
 variable "SUPABASE_ACCESS_TOKEN_STG" {
   type        = string
@@ -88,7 +88,7 @@ variable "SMTP_PASSWORD_STG" {
   sensitive   = true
 }
 
-# ----- prod (nghia-vip-prod) -----
+# ===== PROD (tài khoản A) — nghia-vip-prod =====
 
 variable "SUPABASE_ACCESS_TOKEN_PROD" {
   type        = string
@@ -131,7 +131,7 @@ variable "SMTP_PASSWORD_PROD" {
   sensitive   = true
 }
 
-# ----- test (nghia-vip-test) -----
+# ===== TEST (tài khoản A) — nghia-vip-test =====
 
 variable "SUPABASE_ACCESS_TOKEN_TEST" {
   type        = string
@@ -174,7 +174,7 @@ variable "SMTP_PASSWORD_TEST" {
   sensitive   = true
 }
 
-# ----- SMTP dùng chung -----
+# ===== SMTP dùng chung =====
 
 variable "SMTP_HOST" {
   type        = string
