@@ -1,4 +1,4 @@
-name: hookdeck
+name: terraform-hookdeck
 
 on:
   workflow_dispatch:
@@ -6,14 +6,14 @@ on:
     branches: [main]
     paths:
       - "code/infra/terraform/hookdeck/**"
-      - ".github/workflows/hookdeck.yml"
+      - ".github/workflows/terraform-hookdeck.yml"
       - ".github/workflows/terraform.yml"
       - "scripts/infra/terraform/**"
   pull_request:
     branches: [dev, stg, main]
     paths:
       - "code/infra/terraform/hookdeck/**"
-      - ".github/workflows/hookdeck.yml"
+      - ".github/workflows/terraform-hookdeck.yml"
       - ".github/workflows/terraform.yml"
       - "scripts/infra/terraform/**"
 
