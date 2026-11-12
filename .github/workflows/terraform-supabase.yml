@@ -1,19 +1,19 @@
-name: xxxx
+name: terraform-supabase
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - "code/infra/terraform/xxxx/**"
-      - ".github/workflows/xxxx.yml"
+      - "code/infra/terraform/supabase/**"
+      - ".github/workflows/terraform-supabase.yml"
       - ".github/workflows/terraform.yml"
       - "scripts/infra/terraform/**"
   pull_request:
     branches: [dev, stg, main]
     paths:
-      - "code/infra/terraform/xxxx/**"
-      - ".github/workflows/xxxx.yml"
+      - "code/infra/terraform/supabase/**"
+      - ".github/workflows/terraform-supabase.yml"
       - ".github/workflows/terraform.yml"
       - "scripts/infra/terraform/**"
 
@@ -21,9 +21,9 @@ permissions:
   contents: read
 
 jobs:
-  xxxx:
+  supabase:
     uses: ./.github/workflows/terraform.yml
     with:
-      module: xxxx
+      module: supabase
     secrets:
       DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
