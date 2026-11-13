@@ -20,5 +20,10 @@ variable "projects" {
     "nghia-vip-pro-mot",
     "nghia-vip-pro-hai",
     "nghia-vip-pro-ba",
+
+    "service-feedback-dev",
+    "service-feedback-test",
+    "service-feedback-stg",
+    "service-feedback-prod",
   ]
 }
