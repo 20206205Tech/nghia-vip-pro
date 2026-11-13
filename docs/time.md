@@ -32,3 +32,4 @@
 2026_11_12_23_14_08: Đổi tên các workflow Terraform thành terraform-*
 2026_11_13_22_28_49: Thêm 4 project Neon cho service-feedback (dev, test, stg, prod)
 2026_11_13_22_46_11: Thêm docs/time.md và hướng dẫn quy trình merge request
+2026_11_13_23_04_21: Thêm workflow supabase-ids (chạy tay) để xem Project ID các project Supabase
