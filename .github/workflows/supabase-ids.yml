@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install Doppler CLI
-        uses: dopplerhq/cli-action@v4
+        uses: dopplerhq/cli-action@4819d808ab99e5cde19a0637a16536a4038fad73 # v4
 
       # Lấy TF_API_TOKEN để đọc state trên Terraform Cloud
       - name: Load needed secrets from Doppler
@@ -34,7 +34,7 @@ jobs:
         run: bash scripts/infra/terraform/doppler-tf-env.sh "code/infra/terraform/supabase"
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v4
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4
         with:
           terraform_version: "1.7.0"
           terraform_wrapper: false
