@@ -33,3 +33,4 @@
 2026_11_13_22_28_49: Thêm 4 project Neon cho service-feedback (dev, test, stg, prod)
 2026_11_13_22_46_11: Thêm docs/time.md và hướng dẫn quy trình merge request
 2026_11_13_23_04_21: Thêm workflow supabase-ids (chạy tay) để xem Project ID các project Supabase
+2026_11_13_23_11_50: Workflow supabase-ids chạy mỗi ngày và gọi /auth/v1/authorize của 4 project Supabase
