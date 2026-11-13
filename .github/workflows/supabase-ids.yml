@@ -1,0 +1,54 @@
+# Chạy tay để xem Project ID (project ref) và URL các project Supabase.
+# Chỉ đọc `terraform output` từ state trên Terraform Cloud, không plan/apply.
+name: supabase-ids
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  supabase-ids:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./code/infra/terraform/supabase
+
+    env:
+      TF_IN_AUTOMATION: "true"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v4
+
+      # Lấy TF_API_TOKEN để đọc state trên Terraform Cloud
+      - name: Load needed secrets from Doppler
+        working-directory: ${{ github.workspace }}
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+        run: bash scripts/infra/terraform/doppler-tf-env.sh "code/infra/terraform/supabase"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.7.0"
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Show Supabase project IDs
+        run: |
+          refs=$(terraform output -json project_refs)
+          {
+            echo "## Supabase project IDs"
+            echo
+            echo "| Môi trường | Project ID | URL |"
+            echo "|---|---|---|"
+            echo "$refs" | jq -r 'to_entries[] | "| \(.key) | `\(.value)` | https://\(.value).supabase.co |"'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
