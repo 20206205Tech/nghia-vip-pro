@@ -31,4 +31,4 @@
 2026_11_12_07_25_10: Phân bổ lại tài khoản Supabase: tài khoản B cho dev, stg; tài khoản A cho prod, test
 2026_11_12_23_14_08: Đổi tên các workflow Terraform thành terraform-*
 2026_11_13_22_28_49: Thêm 4 project Neon cho service-feedback (dev, test, stg, prod)
-2026_11_13_15_46_11: Thêm docs/time.md và hướng dẫn quy trình merge request
+2026_11_13_22_46_11: Thêm docs/time.md và hướng dẫn quy trình merge request
