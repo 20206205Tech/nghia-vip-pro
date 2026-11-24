@@ -9,7 +9,7 @@ terraform {
   required_providers {
     hookdeck = {
       source  = "hookdeck/hookdeck"
-      version = "~> 2.4"
+      version = "~> 3.0"
     }
     # Tạo webhook trên Jira trỏ về URL của Hookdeck (xem telegram_jira.tf)
     jira = {
